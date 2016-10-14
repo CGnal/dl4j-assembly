@@ -30,11 +30,10 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.{ Repartition, RepartitionStrategy }
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
-import org.deeplearning4j.spark.stats.StatsUtils
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
-// spark-submit --master yarn --deploy-mode client --class com.cgnal.examples.dl4j.Main dl4j-example-assembly-1.0.jar
+// spark-submit --master yarn --deploy-mode client --class com.cgnal.examples.dl4j.Main dl4j-assembly-0.6.0.jar
 
 object Main extends App {
 
@@ -50,7 +49,7 @@ object Main extends App {
 
   private val uberJarLocation = {
     val location = getJar(Main.getClass)
-    if (new File(location).isDirectory) s"${System.getProperty("user.dir")}/assembly/target/scala-2.10/dl4j-example-assembly-1.0.jar" else location
+    if (new File(location).isDirectory) s"${System.getProperty("user.dir")}/assembly/target/scala-2.10/dl4j-assembly-0.6.0.jar" else location
   }
 
   if (master.isEmpty) {
@@ -91,21 +90,27 @@ object Main extends App {
 
   val batchSizePerWorker = 32
   val seed = 12345
+  val alreadyCreated = true
 
-  import collection.convert.decorateAsScala._
+  if (!alreadyCreated) {
 
-  private val iter = new MnistDataSetIterator(batchSizePerWorker, true, seed)
-  private val data = iter.asScala.toList
+    import collection.convert.decorateAsScala._
 
-  private val rdd: RDD[DataSet] = sparkContext.parallelize[DataSet](data)
+    val iter = new MnistDataSetIterator(batchSizePerWorker, true, seed)
+    val data = iter.asScala.toList
 
-  private val forSequenceFile = rdd.map(dataset => {
-    val baos = new ByteArrayOutputStream()
-    dataset.save(baos)
-    val bytes = baos.toByteArray
-    (new Text(UUID.randomUUID().toString), new BytesWritable(bytes))
-  })
-  forSequenceFile.saveAsSequenceFile("./MnistMLPPreprocessed", None)
+    val rdd: RDD[DataSet] =
+      sparkContext.parallelize[DataSet](data)
+
+    val forSequenceFile =
+      rdd.map(dataset => {
+        val baos = new ByteArrayOutputStream()
+        dataset.save(baos)
+        val bytes = baos.toByteArray
+        (new Text(UUID.randomUUID().toString), new BytesWritable(bytes))
+      })
+    forSequenceFile.saveAsSequenceFile("./MnistMLPPreprocessed", None)
+  }
 
   private val sequenceFile = sparkContext.sequenceFile("./MnistMLPPreprocessed", classOf[Text], classOf[BytesWritable])
   private val trainData = sequenceFile.map(pair => {
@@ -114,6 +119,16 @@ object Main extends App {
     ds.load(bais)
     ds
   })
+  private val testData = {
+
+    import collection.convert.decorateAsScala._
+
+    val iter = new MnistDataSetIterator(batchSizePerWorker, false, seed)
+    val data = iter.asScala.toList
+
+    val rdd: RDD[DataSet] = sparkContext.parallelize[DataSet](data)
+    rdd
+  }
 
   private val nnconf = new NeuralNetConfiguration.Builder()
     .seed(12345)
@@ -142,15 +157,13 @@ object Main extends App {
     .build()
 
   private val sparkNet = new SparkDl4jMultiLayer(sparkContext, nnconf, tm)
-  sparkNet.setCollectTrainingStats(true)
 
-  for (i <- 0 to 10) {
+  for (i <- 0 until 10) {
     val _ = sparkNet.fit(trainData)
     println(s"Completed Epoch $i")
+    val evaluation = sparkNet.evaluate(testData)
+    println(evaluation.stats())
   }
-
-  private val stats = sparkNet.getSparkTrainingStats
-  StatsUtils.exportStatsAsHtml(stats, "SparkStats.html", sparkContext)
 
   sparkContext.stop()
 
