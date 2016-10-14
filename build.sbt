@@ -9,6 +9,8 @@ val nd4jVersion = "0.6.0"
 
 val dl4jVersion = "0.6.0"
 
+val datavecVersion = "0.6.0"
+
 val scalaTestVersion = "3.0.0"
 
 organization := "com.cgnal.dl4j"
@@ -107,6 +109,9 @@ val assemblyDependencies = (scope: String) => Seq(
     exclude("com.fasterxml.jackson.dataformat", "jackson-dataformat-yaml"),
   sparkExcludes("org.nd4j" %% "nd4j-kryo" % nd4jVersion % scope)
     exclude("com.esotericsoftware.kryo", "kryo"),
+  sparkExcludes("org.datavec" % "datavec-api" % datavecVersion % scope),
+  sparkExcludes("org.datavec" %% "datavec-spark" % datavecVersion % scope)
+    exclude("org.apache.spark", "*"),
   "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.4" % scope,
   "com.fasterxml.jackson.core" % "jackson-core" % "2.4.4" % scope,
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4" % scope,
