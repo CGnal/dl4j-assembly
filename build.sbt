@@ -109,6 +109,7 @@ val assemblyDependencies = (scope: String) => Seq(
     exclude("com.fasterxml.jackson.dataformat", "jackson-dataformat-yaml"),
   sparkExcludes("org.nd4j" %% "nd4j-kryo" % nd4jVersion % scope)
     exclude("com.esotericsoftware.kryo", "kryo"),
+  sparkExcludes("org.nd4j" %% "nd4s" % nd4jVersion % scope),
   sparkExcludes("org.datavec" % "datavec-api" % datavecVersion % scope),
   sparkExcludes("org.datavec" %% "datavec-spark" % datavecVersion % scope)
     exclude("org.apache.spark", "*"),
