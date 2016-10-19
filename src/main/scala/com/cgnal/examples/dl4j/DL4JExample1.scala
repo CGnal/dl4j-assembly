@@ -35,7 +35,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 
 // spark-submit --master yarn --deploy-mode client --class com.cgnal.examples.dl4j.Main dl4j-assembly-0.6.0.jar
 
-object Main extends App {
+object DL4JExample1 extends App {
 
   val yarn = true
 
@@ -48,7 +48,7 @@ object Main extends App {
   private val master = conf.getOption("spark.master")
 
   private val uberJarLocation = {
-    val location = getJar(Main.getClass)
+    val location = getJar(DL4JExample1.getClass)
     if (new File(location).isDirectory) s"${System.getProperty("user.dir")}/assembly/target/scala-2.10/dl4j-assembly-0.6.0.jar" else location
   }
 
