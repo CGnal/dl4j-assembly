@@ -33,7 +33,7 @@ import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
-// spark-submit --master yarn --deploy-mode client --class com.cgnal.examples.dl4j.Main dl4j-assembly-0.6.0.jar
+// spark-submit --master yarn --deploy-mode client --class com.cgnal.examples.dl4j.DL4JExample1 dl4j-assembly-0.6.0.jar
 
 object DL4JExample1 extends App {
 
