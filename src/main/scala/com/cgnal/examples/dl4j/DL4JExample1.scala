@@ -30,6 +30,7 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.{ Repartition, RepartitionStrategy }
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
+import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
@@ -49,7 +50,7 @@ object DL4JExample1 extends App {
 
   private val uberJarLocation = {
     val location = getJar(DL4JExample1.getClass)
-    if (new File(location).isDirectory) s"${System.getProperty("user.dir")}/assembly/target/scala-2.10/dl4j-assembly-0.6.0.jar" else location
+    if (new File(location).isDirectory) s"${System.getProperty("user.dir")}/assembly/target/scala-2.11/dl4j-assembly-0.8.0.jar" else location
   }
 
   if (master.isEmpty) {
@@ -62,7 +63,7 @@ object DL4JExample1 extends App {
         setMaster("yarn-client").
         setAppName("dl4j-example-local").
         setJars(List(uberJarLocation)).
-        set("spark.yarn.jar", "local:/opt/cloudera/parcels/CDH/lib/spark/assembly/lib/spark-assembly.jar").
+        set("spark.yarn.jars", "local:/opt/cloudera/parcels/SPARK2/lib/spark2/jars/*").
         set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
         set("spark.io.compression.codec", "lzf").
         set("spark.speculation", "true").
@@ -90,7 +91,7 @@ object DL4JExample1 extends App {
 
   val batchSizePerWorker = 32
   val seed = 12345
-  val alreadyCreated = true
+  val alreadyCreated = false
 
   if (!alreadyCreated) {
 
@@ -134,7 +135,7 @@ object DL4JExample1 extends App {
     .seed(12345)
     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
     .iterations(1)
-    .activation("relu")
+    .activation(Activation.RELU)
     .weightInit(WeightInit.XAVIER)
     .learningRate(0.0069)
     .updater(Updater.NESTEROVS).momentum(0.9)
@@ -143,7 +144,7 @@ object DL4JExample1 extends App {
     .layer(0, new DenseLayer.Builder().nIn(28 * 28).nOut(500).build())
     .layer(1, new DenseLayer.Builder().nIn(500).nOut(100).build())
     .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-      .activation("softmax").nIn(100).nOut(10).build())
+      .activation(Activation.SOFTMAX).nIn(100).nOut(10).build())
     .pretrain(false).backprop(true)
     .build()
 

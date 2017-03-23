@@ -24,7 +24,7 @@ import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpec}
 
 class SparkIntegrationSpec extends WordSpec with MustMatchers with BeforeAndAfterAll {
 
-  @SuppressWarnings(Array("org.wartremover.warts.Var"))
+  @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.Null"))
   var sparkContext: SparkContext = _
 
   def getJar(klass: Class[_]): String = {
@@ -32,6 +32,7 @@ class SparkIntegrationSpec extends WordSpec with MustMatchers with BeforeAndAfte
     codeSource.getLocation.getPath
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
   override def beforeAll(): Unit = {
 
     val initialExecutors = 4
@@ -70,6 +71,7 @@ class SparkIntegrationSpec extends WordSpec with MustMatchers with BeforeAndAfte
     }
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
   override def afterAll(): Unit = {
     sparkContext.stop()
   }

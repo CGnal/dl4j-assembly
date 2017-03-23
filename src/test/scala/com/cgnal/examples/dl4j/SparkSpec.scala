@@ -24,9 +24,10 @@ final case class Person(name: String, age: Int)
 
 class SparkSpec extends WordSpec with MustMatchers with BeforeAndAfterAll {
 
-  @SuppressWarnings(Array("org.wartremover.warts.Var"))
+  @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.Null"))
   var sparkContext: SparkContext = _
 
+  @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
   override def beforeAll(): Unit = {
     val conf = new SparkConf().
       setAppName("spark-cdh5-template-local-test").
@@ -40,6 +41,7 @@ class SparkSpec extends WordSpec with MustMatchers with BeforeAndAfterAll {
     }
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
   override def afterAll(): Unit = {
     sparkContext.stop()
   }

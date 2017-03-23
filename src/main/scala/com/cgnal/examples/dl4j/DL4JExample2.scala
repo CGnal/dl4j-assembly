@@ -30,14 +30,15 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.{ Repartition, RepartitionStrategy }
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
+import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.lossfunctions.LossFunctions._
 
-// spark-submit --master yarn --deploy-mode client --class com.cgnal.examples.dl4j.DL4JExample2 dl4j-assembly-0.6.0.jar
+// spark-submit --master yarn --deploy-mode client --class com.cgnal.examples.dl4j.DL4JExample2 dl4j-assembly-0.8.0.jar
 
 object DL4JExample2 extends App {
 
-  val yarn = false
+  val yarn = true
 
   val initialExecutors = 4
 
@@ -49,7 +50,7 @@ object DL4JExample2 extends App {
 
   private val uberJarLocation = {
     val location = getJar(DL4JExample1.getClass)
-    if (new File(location).isDirectory) s"${System.getProperty("user.dir")}/assembly/target/scala-2.10/dl4j-assembly-0.6.0.jar" else location
+    if (new File(location).isDirectory) s"${System.getProperty("user.dir")}/assembly/target/scala-2.11/dl4j-assembly-0.8.0.jar" else location
   }
 
   if (master.isEmpty) {
@@ -62,7 +63,7 @@ object DL4JExample2 extends App {
         setMaster("yarn-client").
         setAppName("dl4j-example-local").
         setJars(List(uberJarLocation)).
-        set("spark.yarn.jar", "local:/opt/cloudera/parcels/CDH/lib/spark/assembly/lib/spark-assembly.jar").
+        set("spark.yarn.jars", "local:/opt/cloudera/parcels/SPARK2/lib/spark2/jars/*").
         set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
         set("spark.io.compression.codec", "lzf").
         set("spark.speculation", "true").
@@ -121,7 +122,7 @@ object DL4JExample2 extends App {
       iterator.next()
     })
     import collection.convert.decorateAsJava._
-    List(DataSet.merge(datasets.toList.asJava, false)).iterator
+    List(DataSet.merge(datasets.toList.asJava)).iterator
   }).map[DataSet](ds => {
     ds.normalize()
     ds
@@ -135,7 +136,7 @@ object DL4JExample2 extends App {
       iterator.next()
     })
     import collection.convert.decorateAsJava._
-    List(DataSet.merge(datasets.toList.asJava, false)).iterator
+    List(DataSet.merge(datasets.toList.asJava)).iterator
   }).map[DataSet](ds => {
     ds.normalize()
     ds
@@ -161,11 +162,11 @@ object DL4JExample2 extends App {
       nIn(numInputs).
       nOut(numHiddenNodes).
       weightInit(WeightInit.XAVIER).
-      activation("relu").
+      activation(Activation.RELU).
       build()).
     layer(1, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD).
       weightInit(WeightInit.XAVIER).
-      activation("softmax").
+      activation(Activation.SOFTMAX).
       nIn(numHiddenNodes).nOut(numOutputs).
       build()).
     pretrain(false).backprop(true).build()

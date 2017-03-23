@@ -1,17 +1,17 @@
 import de.heikoseeberger.sbtheader.license.Apache2_0
 import sbt._
 
-val sparkVersion = "1.6.0-cdh5.8.2"
+val sparkVersion = "2.0.0.cloudera2"
 
-val hadoopVersion = "2.6.0-cdh5.8.2"
+val hadoopVersion = "2.6.0-cdh5.10.0"
 
-val nd4jVersion = "0.6.0"
+val nd4jVersion = "0.8.0"
 
-val dl4jVersion = "0.6.0"
+val dl4jVersion = "0.8.0"
 
-val datavecVersion = "0.6.0"
+val datavecVersion = "0.8.0"
 
-val scalaTestVersion = "3.0.0"
+val scalaTestVersion = "3.0.1"
 
 organization := "com.cgnal.dl4j"
 
@@ -21,7 +21,7 @@ version in ThisBuild := s"$dl4jVersion"
 
 val assemblyName = s"dl4j-assembly"
 
-scalaVersion := "2.10.6"
+scalaVersion in ThisBuild := "2.11.8"
 
 ivyScala := ivyScala.value map {
   _.copy(overrideScalaVersion = true)
@@ -101,7 +101,7 @@ val assemblyDependencies = (scope: String) => Seq(
     exclude("com.fasterxml.jackson.core", "jackson-core")
     exclude("com.fasterxml.jackson.core", "jackson-databind")
     exclude("com.fasterxml.jackson.dataformat", "jackson-dataformat-yaml"),
-  sparkExcludes("org.deeplearning4j" %% "dl4j-spark" % dl4jVersion % scope)
+  sparkExcludes("org.deeplearning4j" %% "dl4j-spark" % s"${dl4jVersion}_spark_2" % scope)
     exclude("org.apache.spark", "*")
     exclude("com.fasterxml.jackson.core", "jackson-annotations")
     exclude("com.fasterxml.jackson.core", "jackson-core")
@@ -111,7 +111,7 @@ val assemblyDependencies = (scope: String) => Seq(
     exclude("com.esotericsoftware.kryo", "kryo"),
   sparkExcludes("org.nd4j" %% "nd4s" % nd4jVersion % scope),
   sparkExcludes("org.datavec" % "datavec-api" % datavecVersion % scope),
-  sparkExcludes("org.datavec" %% "datavec-spark" % datavecVersion % scope)
+  sparkExcludes("org.datavec" %% "datavec-spark" % s"${datavecVersion}_spark_2" % scope)
     exclude("org.apache.spark", "*"),
   "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.4" % scope,
   "com.fasterxml.jackson.core" % "jackson-core" % "2.4.4" % scope,
@@ -144,6 +144,20 @@ libraryDependencies ++= Seq(
   hadoopClientExcludes("org.apache.hadoop" % "hadoop-client" % hadoopVersion % hadoopDependenciesScope)
 ) ++ assemblyDependencies(assemblyDependenciesScope)
 
+//Trick to make Intellij/IDEA happy
+//We set all provided dependencies to none, so that they are included in the classpath of root module
+lazy val mainRunner = project.in(file("mainRunner")).dependsOn(RootProject(file("."))).settings(
+  // we set all provided dependencies to none, so that they are included in the classpath of mainRunner
+  libraryDependencies := (libraryDependencies in RootProject(file("."))).value.map {
+    module =>
+      if (module.configurations.equals(Some("provided"))) {
+        module.copy(configurations = None)
+      } else {
+        module
+      }
+  }
+)
+
 //http://stackoverflow.com/questions/18838944/how-to-add-provided-dependencies-back-to-run-test-tasks-classpath/21803413#21803413
 run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run))
 
@@ -156,7 +170,6 @@ lazy val root = (project in file(".")).
   configs(IntegrationTest).
   settings(Defaults.itSettings: _*).
   settings(
-    libraryDependencies += "org.scalatest" % "scalatest_2.10" % scalaTestVersion % "it,test",
     headers := Map(
       "sbt" -> Apache2_0("2016", "CGnal S.p.A."),
       "scala" -> Apache2_0("2016", "CGnal S.p.A."),
